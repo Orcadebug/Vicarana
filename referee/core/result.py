@@ -38,5 +38,9 @@ class VerificationResult:
 
     @property
     def passed(self) -> bool:
-        """Whether the submission passed verification (score > 0)."""
-        return self.composite_score > 0.0
+        """Whether the submission passed verification end to end."""
+        return (
+            self.compile_success
+            and self.passed_tests == self.total_tests
+            and self.composite_score > 0.0
+        )

@@ -150,7 +150,11 @@ class VerificationPipeline:
                     break
                 actual = er.outputs[key]
                 if not np.allclose(
-                    actual, expected, rtol=self.scorer.rtol, atol=self.scorer.atol
+                    actual,
+                    expected,
+                    rtol=self.scorer.rtol,
+                    atol=self.scorer.atol,
+                    equal_nan=True,
                 ):
                     all_close = False
                     break
@@ -188,8 +192,12 @@ class VerificationPipeline:
 
         Returns ratio: reference_time / candidate_time, capped at 1.0.
         """
-        # Generate a small set of large test cases for perf measurement
-        perf_cases = problem.generate_test_cases(seed=seed + 1000, n=3)
+        # Sample more than we need, then keep the largest workloads so
+        # deterministic edge cases do not dominate performance timing.
+        perf_cases = self._select_performance_cases(
+            problem.generate_test_cases(seed=seed + 1000, n=16),
+            limit=3,
+        )
         if not perf_cases:
             return 1.0
 
@@ -225,6 +233,28 @@ class VerificationPipeline:
 
         ratio = avg_reference / avg_candidate
         return min(ratio, 1.0)
+
+    def _select_performance_cases(
+        self,
+        test_cases: list[TestCase],
+        limit: int,
+    ) -> list[TestCase]:
+        """Prefer the largest cases when benchmarking."""
+        ranked = sorted(
+            test_cases,
+            key=self._test_case_workload_size,
+            reverse=True,
+        )
+        return ranked[:limit]
+
+    def _test_case_workload_size(self, test_case: TestCase) -> int:
+        """Estimate case size from its largest tensor-like input/output."""
+        sizes = [
+            arr.size
+            for group in (test_case.inputs, test_case.expected_outputs)
+            for arr in group.values()
+        ]
+        return max(sizes, default=0)
 
     def _compile_failure_result(self, artifact: CompiledArtifact) -> VerificationResult:
         return VerificationResult(

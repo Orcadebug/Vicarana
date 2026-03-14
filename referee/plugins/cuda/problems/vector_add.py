@@ -6,6 +6,8 @@ import numpy as np
 
 from referee.core.protocols import TestCase, TestCategory
 
+VECTOR_ADD_REQUIRED_SIZES = [0, 1, 2, 7, 513, 1025, 4097, 4096, 65536]
+
 
 class VectorAddProblem:
     """Element-wise vector addition: C[i] = A[i] + B[i]."""
@@ -31,18 +33,22 @@ class VectorAddProblem:
         rng = np.random.default_rng(seed)
         cases: list[TestCase] = []
 
-        # Edge cases first
-        edge_sizes = [0, 1, 2, 7, 15, 33]
-        for size in edge_sizes:
+        # Required Stage 1 matrix first so verify() always covers it.
+        for size in VECTOR_ADD_REQUIRED_SIZES:
             if len(cases) >= n:
                 break
-            a = rng.standard_normal(size).astype(np.float32)
-            b = rng.standard_normal(size).astype(np.float32)
+            a = self._make_inputs(rng, size)
+            b = self._make_inputs(rng, size)
+            category = (
+                TestCategory.EDGE
+                if size in {0, 1, 2, 7}
+                else TestCategory.BASIC
+            )
             cases.append(TestCase(
                 inputs={"A": a, "B": b},
                 expected_outputs={"C": a + b},
                 metadata={"kernel_name": "vector_add", "args_order": ["A", "B", "C", "n"]},
-                category=TestCategory.EDGE,
+                category=category,
             ))
 
         # Adversarial cases: NaN, inf, denormals
@@ -67,11 +73,11 @@ class VectorAddProblem:
             ))
 
         # Basic cases: varying sizes
-        basic_sizes = [64, 256, 1024, 4096, 16384, 65536, 262144, 1048576]
+        basic_sizes = [16384, 65536, 262144, 1048576]
         while len(cases) < n:
             size = rng.choice(basic_sizes)
-            a = rng.standard_normal(size).astype(np.float32)
-            b = rng.standard_normal(size).astype(np.float32)
+            a = self._make_inputs(rng, int(size))
+            b = self._make_inputs(rng, int(size))
             cases.append(TestCase(
                 inputs={"A": a, "B": b},
                 expected_outputs={"C": a + b},
@@ -97,3 +103,13 @@ __global__ void vector_add(const float* A, const float* B, float* C, int n) {
 
     def expected_complexity(self) -> str:
         return "O(n)"
+
+    def _make_inputs(
+        self,
+        rng: np.random.Generator,
+        size: int,
+    ) -> np.ndarray:
+        """Generate stable nonzero values so obviously wrong kernels fail."""
+        if size == 0:
+            return np.array([], dtype=np.float32)
+        return rng.uniform(0.25, 4.0, size=size).astype(np.float32)

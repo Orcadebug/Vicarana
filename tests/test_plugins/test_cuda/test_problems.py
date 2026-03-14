@@ -6,7 +6,10 @@ import numpy as np
 import pytest
 
 from referee.core.protocols import TestCategory
-from referee.plugins.cuda.problems.vector_add import VectorAddProblem
+from referee.plugins.cuda.problems.vector_add import (
+    VECTOR_ADD_REQUIRED_SIZES,
+    VectorAddProblem,
+)
 from referee.plugins.cuda.problems.matmul import MatmulProblem
 from referee.plugins.cuda.problems.reduce import ReduceProblem
 
@@ -28,6 +31,9 @@ class TestVectorAddProblem:
         assert TestCategory.EDGE in categories
         assert TestCategory.BASIC in categories
 
+        sizes = [c.inputs["A"].size for c in cases]
+        assert sizes[:len(VECTOR_ADD_REQUIRED_SIZES)] == VECTOR_ADD_REQUIRED_SIZES
+
     def test_deterministic_generation(self):
         p = VectorAddProblem()
         c1 = p.generate_test_cases(seed=42, n=10)
@@ -48,6 +54,12 @@ class TestVectorAddProblem:
         for c in cases:
             expected = c.inputs["A"] + c.inputs["B"]
             np.testing.assert_allclose(c.expected_outputs["C"], expected)
+
+    def test_required_sizes_are_present_when_requested(self):
+        p = VectorAddProblem()
+        cases = p.generate_test_cases(seed=123, n=len(VECTOR_ADD_REQUIRED_SIZES))
+        sizes = [c.inputs["A"].size for c in cases]
+        assert sizes == VECTOR_ADD_REQUIRED_SIZES
 
 
 class TestMatmulProblem:

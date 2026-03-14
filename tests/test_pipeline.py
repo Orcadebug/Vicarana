@@ -85,6 +85,8 @@ class TestVerificationPipeline:
         result = pipeline.run("honest code", problem, seed=42, num_test_cases=10)
         assert result.composite_score > 0.5
         assert result.compile_success
+        assert result.passed is True
+        assert result.failed_tests == 0
 
     def test_compile_failure_zero_score(self, problem):
         pipeline = VerificationPipeline(
@@ -95,6 +97,7 @@ class TestVerificationPipeline:
         result = pipeline.run("bad code", problem, seed=42, num_test_cases=10)
         assert result.composite_score == 0.0
         assert not result.compile_success
+        assert result.passed is False
 
     def test_wrong_outputs_low_correctness(self, problem):
         pipeline = VerificationPipeline(
@@ -104,6 +107,8 @@ class TestVerificationPipeline:
         )
         result = pipeline.run("wrong code", problem, seed=42, num_test_cases=10)
         assert result.correctness.value < 1.0
+        assert result.failed_tests > 0
+        assert result.passed is False
 
     def test_cheating_triggers_kill_switch(self, problem):
         pipeline = VerificationPipeline(
@@ -113,6 +118,7 @@ class TestVerificationPipeline:
         )
         result = pipeline.run("cheating code", problem, seed=42, num_test_cases=10)
         assert result.composite_score == 0.0
+        assert result.passed is False
 
     def test_deterministic_results(self, problem):
         """Same code + same seed → identical result."""

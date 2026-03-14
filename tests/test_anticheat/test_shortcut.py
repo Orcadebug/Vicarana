@@ -30,6 +30,11 @@ class TestStaticCheck:
         result = checker.check_static(honest_vector_add_source, vector_add_problem)
         assert result.verdict == AntiCheatVerdict.PASSED
 
+    def test_lazy_fixture_flagged(self, checker, lazy_vector_add_source, vector_add_problem):
+        result = checker.check_static(lazy_vector_add_source, vector_add_problem)
+        assert result.verdict in (AntiCheatVerdict.SUSPICIOUS, AntiCheatVerdict.FAILED)
+        assert any("short" in evidence.lower() for evidence in result.evidence)
+
     def test_cublas_usage_flagged(self, checker, cheating_cublas_source, vector_add_problem):
         result = checker.check_static(cheating_cublas_source, vector_add_problem)
         assert result.verdict in (AntiCheatVerdict.SUSPICIOUS, AntiCheatVerdict.FAILED)

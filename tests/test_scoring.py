@@ -36,6 +36,8 @@ class TestCompositeScorer:
             total_tests=100,
         )
         assert result.composite_score == pytest.approx(0.50)  # perf + integrity
+        assert result.failed_tests == 100
+        assert result.passed is False
 
     def test_integrity_kill_switch(self, scorer):
         """If integrity drops below threshold, composite is forced to 0."""
@@ -101,4 +103,5 @@ class TestCompositeScorer:
             total_tests=100,
         )
         assert result.passed_tests == 50
+        assert result.failed_tests == 50
         assert result.total_tests == 100

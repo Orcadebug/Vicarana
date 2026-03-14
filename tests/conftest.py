@@ -32,6 +32,11 @@ def honest_vector_add_source() -> str:
 
 
 @pytest.fixture
+def bad_vector_add_zero_source() -> str:
+    return read_fixture("bad_vector_add_zero.cu")
+
+
+@pytest.fixture
 def cheating_hardcoded_source() -> str:
     return read_fixture("cheating_hardcoded.cu")
 
@@ -44,6 +49,11 @@ def cheating_cublas_source() -> str:
 @pytest.fixture
 def cheating_env_snoop_source() -> str:
     return read_fixture("cheating_env_snoop.cu")
+
+
+@pytest.fixture
+def lazy_vector_add_source() -> str:
+    return read_fixture("lazy_vector_add.cu")
 
 
 @pytest.fixture

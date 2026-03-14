@@ -42,7 +42,11 @@ class CompositeScorer:
         correctness = Score(
             value=correctness_value,
             weight=self.correctness_weight,
-            details={"passed": passed_tests, "total": total_tests},
+            details={
+                "passed": passed_tests,
+                "failed": max(total_tests - passed_tests, 0),
+                "total": total_tests,
+            },
         )
         performance = Score(
             value=performance_value,
@@ -72,6 +76,7 @@ class CompositeScorer:
             compile_log=compile_log,
             total_tests=total_tests,
             passed_tests=passed_tests,
+            failed_tests=max(total_tests - passed_tests, 0),
         )
 
     def _compute_integrity(self, results: list[AntiCheatResult]) -> float:
