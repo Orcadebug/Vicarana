@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "referee"
+version = "0.1.0"
+description = "AI Code Verification Engine"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=1.26",
+]
+
+[project.optional-dependencies]
+cuda = [
+    "cupy-cuda12x>=13.0",
+    "cuda-python>=12.6",
+]
+dev = [
+    "pytest>=8.0",
+    "pytest-timeout>=2.3",
+    "hypothesis>=6.100",
+    "mypy>=1.10",
+    "ruff>=0.5",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "gpu: marks tests as requiring GPU (deselect with '-m \"not gpu\"')",
+]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
